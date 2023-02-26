@@ -23,8 +23,6 @@ namespace WindowsFormsApp1
         private int minutes = 0;
         private int hours = 0;
         #endregion
-
-
         public Form1()
         {
             InitializeComponent();            
@@ -97,7 +95,6 @@ namespace WindowsFormsApp1
             pictureBox2.Refresh();         //перезагрузка картики
         }
 
-
         private int countNeighbours(int x, int y) //соседи
         {
             int count = 0;
@@ -117,7 +114,6 @@ namespace WindowsFormsApp1
 
             return count;
         }
-
 
         private void StopGame()       //стоп
         {
@@ -139,12 +135,10 @@ namespace WindowsFormsApp1
             StopGame();
         }
 
-
         private void newGenTimer_Tick(object sender, EventArgs e)  //таймер поколений
         {
             NextGen();             
         }
-
 
         private void bStart_Click(object sender, EventArgs e)     //кнопка старт
         {
