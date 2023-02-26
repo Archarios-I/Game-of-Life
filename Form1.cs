@@ -12,13 +12,17 @@ namespace WindowsFormsApp1
 {
     public partial class Form1 : Form
     {
+        #region переменные
         private Graphics graphics;
         private int resolution;   //разрешение(маштаб)
         private int rows;         //строки
         private int columns;     //столбцы
         private bool[,] field;   //массив координат, позже в нем же будут данные жива клетка или нет                 
         uint currentGen;
-
+        private int seconds = 0;
+        private int minutes = 0;
+        private int hours = 0;
+        #endregion
 
 
         public Form1()
@@ -26,8 +30,8 @@ namespace WindowsFormsApp1
             InitializeComponent();            
         }
 
-        private void StartGame()            //первая генерация карты
-        {
+        private void StartGame()            //старт
+        {            
             if (newGenTimer.Enabled)
                 return;
 
@@ -56,7 +60,7 @@ namespace WindowsFormsApp1
             newGenTimer.Start();
         }
 
-        private void NextGen()         //отрисовка
+        private void NextGen()         //поколения
         {
             graphics.Clear(Color.Black);
             Text = $"Поколение + {++currentGen}";
@@ -94,7 +98,7 @@ namespace WindowsFormsApp1
         }
 
 
-        private int countNeighbours(int x, int y) 
+        private int countNeighbours(int x, int y) //соседи
         {
             int count = 0;
 
@@ -115,7 +119,7 @@ namespace WindowsFormsApp1
         }
 
 
-        private void StopGame()
+        private void StopGame()       //стоп
         {
             if (!newGenTimer.Enabled)
             {
@@ -131,11 +135,12 @@ namespace WindowsFormsApp1
 
         private void bStop_Click(object sender, EventArgs e)        //кнопка стоп
         {
+            gameTimer.Stop();
             StopGame();
         }
 
 
-        private void newGenTimer_Tick(object sender, EventArgs e)  //тик таймера каждые пол секунды
+        private void newGenTimer_Tick(object sender, EventArgs e)  //таймер поколений
         {
             NextGen();             
         }
@@ -143,10 +148,11 @@ namespace WindowsFormsApp1
 
         private void bStart_Click(object sender, EventArgs e)     //кнопка старт
         {
-           StartGame();
+            gameTimer.Start();
+            StartGame();
         }
 
-        private void pictureBox2_MouseMove(object sender, MouseEventArgs e)
+        private void pictureBox2_MouseMove(object sender, MouseEventArgs e)  //давайте рисовать!
         {
             if (!newGenTimer.Enabled)
                 return;
@@ -178,6 +184,22 @@ namespace WindowsFormsApp1
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
             newGenTimer.Interval = (int)numericUpDown1.Value;
+        }
+
+        private void gameTimer_Tick(object sender, EventArgs e)
+        {
+            seconds++;
+            if (seconds == 60)
+            {
+                seconds = 0;
+                minutes++;
+                if (minutes == 60)
+                {
+                    minutes = 0;
+                    hours++;
+                }
+            }
+            labelTime.Text = hours.ToString("D2") + ":" + minutes.ToString("D2") + ":" + seconds.ToString("D2");
         }
     }
 }
