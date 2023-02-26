@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WindowsFormsApp1
@@ -25,23 +19,23 @@ namespace WindowsFormsApp1
         #endregion
         public Form1()
         {
-            InitializeComponent();            
+            InitializeComponent();
         }
 
         private void StartGame()            //старт
-        {            
+        {
             if (newGenTimer.Enabled)
                 return;
 
             currentGen = 0;
-            
+
 
             nudResol.Enabled = false;                      //выключаются кнопки для изменения плотности населения и разрешения
             nudDen.Enabled = false;
             resolution = (int)nudResol.Value;            //разрешение записывается в переменную
 
             rows = pictureBox2.Height / resolution;              //расчет того сколько клеток на поле
-            columns = pictureBox2.Width / resolution;           
+            columns = pictureBox2.Width / resolution;
             field = new bool[columns, rows];
 
             Random random = new Random();
@@ -87,7 +81,7 @@ namespace WindowsFormsApp1
 
                     if (hasLife)
                     {
-                        graphics.FillRectangle(Brushes.Crimson, x * resolution, y * resolution, resolution -1, resolution -1);
+                        graphics.FillRectangle(Brushes.Crimson, x * resolution, y * resolution, resolution - 1, resolution - 1);
                     }
                 }
             }
@@ -107,8 +101,8 @@ namespace WindowsFormsApp1
                     var row = (y + j + rows) % rows;
                     var isSelfChecking = col == x && row == y;
                     var hasLife = field[col, row];
-                    if (hasLife && !isSelfChecking)                    
-                        count++;                    
+                    if (hasLife && !isSelfChecking)
+                        count++;
                 }
             }
 
@@ -126,7 +120,7 @@ namespace WindowsFormsApp1
                 newGenTimer.Stop();
                 nudResol.Enabled = true;                      //включаются кнопки для изменения плотности населения и разрешения
                 nudDen.Enabled = true;
-            }       
+            }
         }
 
         private void bStop_Click(object sender, EventArgs e)        //кнопка стоп
@@ -137,7 +131,7 @@ namespace WindowsFormsApp1
 
         private void newGenTimer_Tick(object sender, EventArgs e)  //таймер поколений
         {
-            NextGen();             
+            NextGen();
         }
 
         private void bStart_Click(object sender, EventArgs e)     //кнопка старт
@@ -154,7 +148,7 @@ namespace WindowsFormsApp1
             if (e.Button == MouseButtons.Left)
             {
                 var x = e.Location.X / resolution;
-                var y = e.Location.Y / resolution;                
+                var y = e.Location.Y / resolution;
                 var validationPassed = ValidateMousePos(x, y);
                 if (validationPassed)
                     field[x, y] = true;
@@ -169,7 +163,7 @@ namespace WindowsFormsApp1
                     field[x, y] = false;
             }
         }
-        
+
         private bool ValidateMousePos(int x, int y)
         {
             return x >= 0 && y >= 0 && x < columns && y < rows;
