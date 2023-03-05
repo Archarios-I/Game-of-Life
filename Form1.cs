@@ -81,7 +81,7 @@ namespace WindowsFormsApp1
 
                     if (hasLife)
                     {
-                        graphics.FillRectangle(Brushes.Crimson, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                        graphics.FillEllipse(Brushes.Cyan, x * resolution, y * resolution, resolution - 1, resolution - 1);
                     }
                 }
             }
@@ -169,12 +169,12 @@ namespace WindowsFormsApp1
             return x >= 0 && y >= 0 && x < columns && y < rows;
         }
 
-        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)          //изменение задержки между поколениями
         {
             newGenTimer.Interval = (int)numericUpDown1.Value;
         }
 
-        private void gameTimer_Tick(object sender, EventArgs e)
+        private void gameTimer_Tick(object sender, EventArgs e)            //отсчет времени
         {
             seconds++;
             if (seconds == 60)
