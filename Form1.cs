@@ -1,49 +1,48 @@
 ﻿using System;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
     public partial class Form1 : Form
     {
-        #region переменные
         private Graphics graphics;
         private int resolution;   //разрешение(маштаб)
         private int rows;         //строки
         private int columns;     //столбцы
         private bool[,] field;   //массив координат, позже в нем же будут данные жива клетка или нет                 
         uint currentGen;
-        private int seconds = 0;
-        private int minutes = 0;
-        private int hours = 0;
-        #endregion
+
         public Form1()
         {
             InitializeComponent();
         }
 
-        private void StartGame()            //старт
+        private readonly Random random = new Random();
+
+        private void StartGame() // первая генерация карты
         {
             if (newGenTimer.Enabled)
                 return;
 
             currentGen = 0;
 
-
-            nudResol.Enabled = false;                      //выключаются кнопки для изменения плотности населения и разрешения
+            nudResol.Enabled = false; // выключаются кнопки для изменения плотности населения и разрешения
             nudDen.Enabled = false;
-            resolution = (int)nudResol.Value;            //разрешение записывается в переменную
+            resolution = (byte)nudResol.Value; // разрешение записывается в переменную
 
-            rows = pictureBox2.Height / resolution;              //расчет того сколько клеток на поле
+            rows = pictureBox2.Height / resolution; // расчет того сколько клеток на поле
             columns = pictureBox2.Width / resolution;
             field = new bool[columns, rows];
 
-            Random random = new Random();
+            byte densityThreshold = (byte)nudDen.Value; // Сохраняем значение плотности в переменной
+
             for (int x = 0; x < columns; x++)
             {
                 for (int y = 0; y < rows; y++)
                 {
-                    field[x, y] = random.Next((int)nudDen.Value) == 0;      //рандомные числа чтобы клетки были живыми или мертвыми
+                    field[x, y] = random.Next(densityThreshold) == 0; // рандомные числа чтобы клетки были живыми или мертвыми
                 }
             }
 
@@ -52,55 +51,69 @@ namespace WindowsFormsApp1
             newGenTimer.Start();
         }
 
-        private void NextGen()         //поколения
+        private void NextGen() // отрисовка
         {
             graphics.Clear(Color.Black);
-            Text = $"Поколение + {++currentGen}";
+            Text = $"Поколение: {++currentGen}";
 
-            var newField = new bool[columns, rows];
+            // Создаем временный массив для обновления состояния
+            bool[,] newField = new bool[columns, rows];
 
+            Parallel.For(0, columns, x =>
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    byte neighboursCount = CountNeighbours(x, y);
+                    bool hasLife = field[x, y];
+
+                    // Логика для определения состояния клетки в следующем поколении
+                    if (!hasLife && neighboursCount == 3)
+                    {
+                        newField[x, y] = true; // Рождается новая жизнь
+                    }
+                    else if (hasLife && (neighboursCount < 2 || neighboursCount > 3))
+                    {
+                        newField[x, y] = false; // Клетка умирает
+                    }
+                    else
+                    {
+                        newField[x, y] = hasLife; // Сохраняем текущее состояние
+                    }
+                }
+            });
+
+            // Обновляем основное поле
+            field = newField;
+
+            // Отрисовка клеток
             for (int x = 0; x < columns; x++)
             {
                 for (int y = 0; y < rows; y++)
                 {
-                    var neighboursCount = countNeighbours(x, y);
-                    var hasLife = field[x, y];
-
-                    if (!hasLife && neighboursCount == 3)
+                    if (field[x, y]) // Если клетка живая
                     {
-                        newField[x, y] = true;
-                    }
-                    else if (hasLife && (neighboursCount < 2 || neighboursCount > 3))
-                    {
-                        newField[x, y] = false;
-                    }
-                    else
-                    {
-                        newField[x, y] = field[x, y];
-                    }
-
-                    if (hasLife)
-                    {
-                        graphics.FillEllipse(Brushes.Cyan, x * resolution, y * resolution, resolution - 1, resolution - 1);
+                        graphics.FillRectangle(Brushes.Green, x * resolution, y * resolution, resolution - 1, resolution - 1);
                     }
                 }
             }
-            field = newField;
-            pictureBox2.Refresh();         //перезагрузка картики
+
+            // Обновление изображения
+            pictureBox2.Refresh();
         }
 
-        private int countNeighbours(int x, int y) //соседи
+
+        private byte CountNeighbours(int x, int y)
         {
-            int count = 0;
+            byte count = 0;
 
             for (int i = -1; i < 2; i++)
             {
                 for (int j = -1; j < 2; j++)
                 {
-                    var col = (x + i + columns) % columns;
-                    var row = (y + j + rows) % rows;
-                    var isSelfChecking = col == x && row == y;
-                    var hasLife = field[col, row];
+                    int col = (x + i + columns) % columns;
+                    int row = (y + j + rows) % rows;
+                    bool isSelfChecking = col == x && row == y;
+                    bool hasLife = field[col, row];
                     if (hasLife && !isSelfChecking)
                         count++;
                 }
@@ -109,7 +122,7 @@ namespace WindowsFormsApp1
             return count;
         }
 
-        private void StopGame()       //стоп
+        private void StopGame()
         {
             if (!newGenTimer.Enabled)
             {
@@ -118,49 +131,48 @@ namespace WindowsFormsApp1
             else
             {
                 newGenTimer.Stop();
-                nudResol.Enabled = true;                      //включаются кнопки для изменения плотности населения и разрешения
+                nudResol.Enabled = true; //включаются кнопки для изменения плотности населения и разрешения
                 nudDen.Enabled = true;
             }
         }
 
-        private void bStop_Click(object sender, EventArgs e)        //кнопка стоп
+        private void bStop_Click(object sender, EventArgs e) //кнопка стоп
         {
-            gameTimer.Stop();
             StopGame();
         }
 
-        private void newGenTimer_Tick(object sender, EventArgs e)  //таймер поколений
+        private void NewGenTimer_Tick(object sender, EventArgs e) //тик таймера каждые пол секунды
         {
             NextGen();
         }
 
-        private void bStart_Click(object sender, EventArgs e)     //кнопка старт
+        private void bStart_Click(object sender, EventArgs e) //кнопка старт
         {
-            gameTimer.Start();
             StartGame();
         }
 
-        private void pictureBox2_MouseMove(object sender, MouseEventArgs e)  //давайте рисовать!
+        private void pictureBox2_MouseMove(object sender, MouseEventArgs e)
         {
             if (!newGenTimer.Enabled)
                 return;
 
-            if (e.Button == MouseButtons.Left)
-            {
-                var x = e.Location.X / resolution;
-                var y = e.Location.Y / resolution;
-                var validationPassed = ValidateMousePos(x, y);
-                if (validationPassed)
-                    field[x, y] = true;
-            }
+            // Вычисляем координаты клетки
+            int x = e.Location.X / resolution;
+            int y = e.Location.Y / resolution;
 
-            if (e.Button == MouseButtons.Right)
+            // Проверяем валидность координат
+            if (!ValidateMousePos(x, y))
+                return;
+
+            // убить или родить
+            switch (e.Button)
             {
-                var x = e.Location.X / resolution;
-                var y = e.Location.Y / resolution;
-                var validationPassed = ValidateMousePos(x, y);
-                if (validationPassed)
-                    field[x, y] = false;
+                case MouseButtons.Left:
+                    field[x, y] = true; // Жизнь
+                    break;
+                case MouseButtons.Right:
+                    field[x, y] = false; // Смерть
+                    break;
             }
         }
 
@@ -169,25 +181,9 @@ namespace WindowsFormsApp1
             return x >= 0 && y >= 0 && x < columns && y < rows;
         }
 
-        private void numericUpDown1_ValueChanged(object sender, EventArgs e)          //изменение задержки между поколениями
+        private void NumericUpDown1_ValueChanged(object sender, EventArgs e)
         {
             newGenTimer.Interval = (int)numericUpDown1.Value;
-        }
-
-        private void gameTimer_Tick(object sender, EventArgs e)            //отсчет времени
-        {
-            seconds++;
-            if (seconds == 60)
-            {
-                seconds = 0;
-                minutes++;
-                if (minutes == 60)
-                {
-                    minutes = 0;
-                    hours++;
-                }
-            }
-            labelTime.Text = hours.ToString("D2") + ":" + minutes.ToString("D2") + ":" + seconds.ToString("D2");
         }
     }
 }
